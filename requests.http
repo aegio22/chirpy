@@ -1,0 +1,14 @@
+POST http://localhost:8080/api/validate_chirp
+Content-Type: application/json
+
+{
+  "body": "I had something interesting for breakfast"
+}
+###
+POST http://localhost:8080/api/validate_chirp
+Content-Type: application/json
+
+{
+  "body": "The quick brown fox jumps over the lazy dog while a digital signal travels across the vast network to ensure that every byte is accounted for."
+}
+

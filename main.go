@@ -15,15 +15,17 @@ func main() {
 	cfg := apiConfig{}
 	multiPlexer := http.NewServeMux()
 	const rootDir = http.Dir(".")
-
+	//initialize fileserver with hits counter
 	multiPlexer.Handle("/app/",
 		http.StripPrefix("/app/",
 			cfg.middlewareMetricsInc(http.FileServer(rootDir))))
 
-	multiPlexer.HandleFunc("/healthz", handlerReadiness)
-	multiPlexer.HandleFunc("/metrics", cfg.handlerCountReqs)
-	multiPlexer.HandleFunc("/reset", cfg.handlerResetHitCount)
-
+	//initialize core endpoints/handlers
+	multiPlexer.HandleFunc("GET /api/healthz", handlerReadiness)
+	multiPlexer.HandleFunc("GET /admin/metrics", cfg.handlerCountReqs)
+	multiPlexer.HandleFunc("POST /admin/reset", cfg.handlerResetHitCount)
+	multiPlexer.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
+	//initialize and start server
 	server := http.Server{
 		Addr:    ":8080",
 		Handler: multiPlexer,
@@ -38,10 +40,9 @@ func main() {
 
 func (cfg *apiConfig) handlerCountReqs(rw http.ResponseWriter, req *http.Request) {
 	hits := cfg.fileserverHits.Load()
-	hitsReport := fmt.Sprintf("Hits: %v", hits)
+	hitsReport := fmt.Sprintf("<html>\n  <body>\n    <h1>Welcome, Chirpy Admin</h1>\n    <p>Chirpy has been visited %d times!</p>\n  </body>\n</html>", hits)
 
-	rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	rw.WriteHeader(http.StatusOK)
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	rw.Write([]byte(hitsReport))
 }
 
