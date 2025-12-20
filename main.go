@@ -1,18 +1,29 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync/atomic"
+
+	"github.com/aegio22/chirpy/internal/database"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	db             *database.Queries
 }
 
 func main() {
-	cfg := apiConfig{}
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatalf("error initializing database: %v", err)
+	}
+	dbQueries := database.New(db)
+	cfg := apiConfig{db: dbQueries}
 	multiPlexer := http.NewServeMux()
 	const rootDir = http.Dir(".")
 	//initialize fileserver with hits counter
@@ -31,7 +42,7 @@ func main() {
 		Handler: multiPlexer,
 	}
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("error starting server: %v", err)
 	}
