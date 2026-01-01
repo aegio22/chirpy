@@ -9,21 +9,32 @@ import (
 	"sync/atomic"
 
 	"github.com/aegio22/chirpy/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
+	platform       string
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
 	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
+
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("error initializing database: %v", err)
 	}
 	dbQueries := database.New(db)
-	cfg := apiConfig{db: dbQueries}
+
+	cfg := apiConfig{db: dbQueries, platform: platform}
 	multiPlexer := http.NewServeMux()
 	const rootDir = http.Dir(".")
 	//initialize fileserver with hits counter
@@ -34,8 +45,9 @@ func main() {
 	//initialize core endpoints/handlers
 	multiPlexer.HandleFunc("GET /api/healthz", handlerReadiness)
 	multiPlexer.HandleFunc("GET /admin/metrics", cfg.handlerCountReqs)
-	multiPlexer.HandleFunc("POST /admin/reset", cfg.handlerResetHitCount)
+	multiPlexer.HandleFunc("POST /admin/reset", cfg.handlerReset)
 	multiPlexer.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
+	multiPlexer.HandleFunc("POST /api/users", cfg.handlerCreateUser)
 	//initialize and start server
 	server := http.Server{
 		Addr:    ":8080",
