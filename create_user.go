@@ -53,7 +53,7 @@ func (cfg *apiConfig) handlerCreateUser(rw http.ResponseWriter, req *http.Reques
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	
+
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusCreated)
 	rw.Write(responseBody)

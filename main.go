@@ -46,7 +46,7 @@ func main() {
 	multiPlexer.HandleFunc("GET /api/healthz", handlerReadiness)
 	multiPlexer.HandleFunc("GET /admin/metrics", cfg.handlerCountReqs)
 	multiPlexer.HandleFunc("POST /admin/reset", cfg.handlerReset)
-	multiPlexer.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
+	multiPlexer.HandleFunc("POST /api/chirps", cfg.handlerCreateChirp)
 	multiPlexer.HandleFunc("POST /api/users", cfg.handlerCreateUser)
 	//initialize and start server
 	server := http.Server{
