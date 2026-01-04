@@ -46,6 +46,7 @@ func main() {
 	multiPlexer.HandleFunc("GET /api/healthz", handlerReadiness)
 	multiPlexer.HandleFunc("GET /admin/metrics", cfg.handlerCountReqs)
 	multiPlexer.HandleFunc("GET /api/chirps", cfg.handlerGetChirps)
+	multiPlexer.HandleFunc("GET /api/chirps/{chirpID}", cfg.handlerGetChirpByID)
 	multiPlexer.HandleFunc("POST /admin/reset", cfg.handlerReset)
 	multiPlexer.HandleFunc("POST /api/chirps", cfg.handlerCreateChirp)
 	multiPlexer.HandleFunc("POST /api/users", cfg.handlerCreateUser)
