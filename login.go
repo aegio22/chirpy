@@ -1,12 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/aegio22/chirpy/internal/auth"
+	"github.com/aegio22/chirpy/internal/database"
 )
 
 func (cfg *apiConfig) handlerLogin(rw http.ResponseWriter, req *http.Request) {
@@ -53,19 +55,40 @@ func (cfg *apiConfig) handlerLogin(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Create JWT token only after password is verified
-	jwtToken, err := auth.MakeJWT(loginQuery.ID, cfg.jwtSecret, time.Duration(*userInfo.ExpiresInSeconds)*time.Second)
+	jwtToken, err := auth.MakeJWT(loginQuery.ID, cfg.jwtSecret)
 	if err != nil {
 		log.Printf("error creating JWT: %v", err)
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		log.Printf("error creating refresh token: %v", err)
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	dbRefreshToken, err := cfg.db.CreateRefreshToken(ctx, database.CreateRefreshTokenParams{
+		Token:     refreshToken,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID:    loginQuery.ID,
+		ExpiresAt: time.Now().Add(60 * 24 * time.Hour), // 60 days from now
+		RevokedAt: sql.NullTime{Valid: false},
+	})
+	if err != nil {
+		log.Printf("error saving refresh token: %v", err)
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	user := User{
-		ID:        loginQuery.ID,
-		CreatedAt: loginQuery.CreatedAt,
-		UpdatedAt: loginQuery.UpdatedAt,
-		Email:     loginQuery.Email,
-		Token:     jwtToken,
+		ID:           loginQuery.ID,
+		CreatedAt:    loginQuery.CreatedAt,
+		UpdatedAt:    loginQuery.UpdatedAt,
+		Email:        loginQuery.Email,
+		Token:        jwtToken,
+		RefreshToken: dbRefreshToken.Token,
 	}
 
 	responseBody, err := json.Marshal(user)

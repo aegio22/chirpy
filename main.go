@@ -53,6 +53,8 @@ func main() {
 	multiPlexer.HandleFunc("POST /api/chirps", cfg.handlerCreateChirp)
 	multiPlexer.HandleFunc("POST /api/users", cfg.handlerCreateUser)
 	multiPlexer.HandleFunc("POST /api/login", cfg.handlerLogin)
+	multiPlexer.HandleFunc("POST /api/refresh", cfg.handlerRefresh)
+	multiPlexer.HandleFunc("POST /api/revoke", cfg.handlerRevoke)
 	//initialize and start server
 	server := http.Server{
 		Addr:    ":8080",
