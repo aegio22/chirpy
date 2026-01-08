@@ -17,6 +17,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	platform       string
+	jwtSecret      string
 }
 
 func main() {
@@ -27,6 +28,7 @@ func main() {
 
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
+	jwtSecret := os.Getenv("JWT_SECRET")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -34,7 +36,7 @@ func main() {
 	}
 	dbQueries := database.New(db)
 
-	cfg := apiConfig{db: dbQueries, platform: platform}
+	cfg := apiConfig{db: dbQueries, platform: platform, jwtSecret: jwtSecret}
 	multiPlexer := http.NewServeMux()
 	const rootDir = http.Dir(".")
 	//initialize fileserver with hits counter
@@ -50,6 +52,7 @@ func main() {
 	multiPlexer.HandleFunc("POST /admin/reset", cfg.handlerReset)
 	multiPlexer.HandleFunc("POST /api/chirps", cfg.handlerCreateChirp)
 	multiPlexer.HandleFunc("POST /api/users", cfg.handlerCreateUser)
+	multiPlexer.HandleFunc("POST /api/login", cfg.handlerLogin)
 	//initialize and start server
 	server := http.Server{
 		Addr:    ":8080",

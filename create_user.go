@@ -6,34 +6,44 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aegio22/chirpy/internal/auth"
+	"github.com/aegio22/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
+	ID             uuid.UUID `json:"id"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	Email          string    `json:"email"`
+	HashedPassword string    `json:"hashed_password"`
+	Token          string    `json:"token"`
 }
 
-type UserEmail struct {
-	Email string `json:"email"`
+type UserInfo struct {
+	Email            string `json:"email"`
+	Password         string `json:"password"`
+	ExpiresInSeconds *int   `json:"expires_in_seconds"`
 }
 
 func (cfg *apiConfig) handlerCreateUser(rw http.ResponseWriter, req *http.Request) {
 	//create context.Context for SQLC queries. Create user email for JSON decoding
 	ctx := req.Context()
-	email := UserEmail{}
-
+	userInfo := UserInfo{}
 	decoder := json.NewDecoder(req.Body)
-	err := decoder.Decode(&email)
+	err := decoder.Decode(&userInfo)
 	if err != nil {
-		log.Printf("error decoding body into an email: %v", err)
+		log.Printf("error decoding body into UserInfo: %v", err)
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	queriedUser, err := cfg.db.CreateUser(ctx, email.Email)
+	hashedPassword, err := auth.HashPassword(userInfo.Password)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	queriedUser, err := cfg.db.CreateUser(ctx, database.CreateUserParams{Email: userInfo.Email, HashedPassword: hashedPassword})
 	if err != nil {
 		log.Printf("error creating user: %v", err)
 		rw.WriteHeader(http.StatusInternalServerError)

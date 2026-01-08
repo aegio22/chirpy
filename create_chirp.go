@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aegio22/chirpy/internal/auth"
 	"github.com/aegio22/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -32,6 +33,26 @@ func (cfg *apiConfig) handlerCreateChirp(rw http.ResponseWriter, req *http.Reque
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	authHeader := req.Header
+
+	bearerToken, err := auth.GetBearerToken(authHeader)
+	if err != nil {
+		log.Printf("error getting bearer token: %v", err)
+		rw.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	userId, err := auth.ValidateJWT(bearerToken, cfg.jwtSecret)
+	if err != nil {
+		log.Printf("error validating jwt: %v", err)
+		rw.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	dbUserID := uuid.NullUUID{
+		UUID:  userId,
+		Valid: true,
+	}
 
 	//start validation logic
 	if len(chirp.Body) > 140 {
@@ -50,12 +71,12 @@ func (cfg *apiConfig) handlerCreateChirp(rw http.ResponseWriter, req *http.Reque
 
 	queriedChirp, err := cfg.db.CreateChirp(ctx, database.CreateChirpParams{
 		Body:   chirp.Body,
-		UserID: chirp.UserId,
+		UserID: dbUserID,
 	})
 	chirp.Id = queriedChirp.ID
 	chirp.CreatedAt = queriedChirp.CreatedAt
 	chirp.UpdatedAt = queriedChirp.UpdatedAt
-	chirp.UserId = queriedChirp.UserID
+	chirp.UserId = dbUserID
 
 	if err != nil {
 		log.Fatalf("error adding chirp to database: %v", err)
