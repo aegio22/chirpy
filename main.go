@@ -55,6 +55,7 @@ func main() {
 	multiPlexer.HandleFunc("POST /api/login", cfg.handlerLogin)
 	multiPlexer.HandleFunc("POST /api/refresh", cfg.handlerRefresh)
 	multiPlexer.HandleFunc("POST /api/revoke", cfg.handlerRevoke)
+	multiPlexer.HandleFunc("PUT /api/users", cfg.handlerChangeUserInfo)
 	//initialize and start server
 	server := http.Server{
 		Addr:    ":8080",
