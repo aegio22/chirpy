@@ -61,7 +61,6 @@ func main() {
 	multiPlexer.HandleFunc("PUT /api/users", cfg.handlerChangeUserInfo)
 	multiPlexer.HandleFunc("DELETE /api/chirps/{chirpID}", cfg.handlerDeleteChirpByID)
 	multiPlexer.HandleFunc("POST /api/polka/webhooks", cfg.handlerUpgradeUserToChirpyRed)
-	
 
 	//initialize and start server
 	server := http.Server{

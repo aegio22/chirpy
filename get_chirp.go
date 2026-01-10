@@ -8,9 +8,13 @@ import (
 	"github.com/google/uuid"
 )
 
+
+
 func (cfg *apiConfig) handlerGetChirpByID(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	id := req.PathValue("chirpID")
+
+
 	chirpID, err := uuid.Parse(id)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
