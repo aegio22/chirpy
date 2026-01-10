@@ -55,10 +55,11 @@ func (cfg *apiConfig) handlerChangeUserInfo(rw http.ResponseWriter, req *http.Re
 	//now fetch updated user
 
 	returnedUser := User{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
+		ID:          user.ID,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
+		Email:       user.Email,
+		IsChirpyRed: user.IsChirpyRed,
 	}
 
 	responseBody, err := json.Marshal(returnedUser)

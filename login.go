@@ -89,6 +89,7 @@ func (cfg *apiConfig) handlerLogin(rw http.ResponseWriter, req *http.Request) {
 		Email:        loginQuery.Email,
 		Token:        jwtToken,
 		RefreshToken: dbRefreshToken.Token,
+		IsChirpyRed:  loginQuery.IsChirpyRed,
 	}
 
 	responseBody, err := json.Marshal(user)

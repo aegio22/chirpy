@@ -18,9 +18,11 @@ type apiConfig struct {
 	db             *database.Queries
 	platform       string
 	jwtSecret      string
+	polkaKey       string
 }
 
 func main() {
+	//Fetch .env variables
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
@@ -29,6 +31,7 @@ func main() {
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
 	jwtSecret := os.Getenv("JWT_SECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -36,7 +39,7 @@ func main() {
 	}
 	dbQueries := database.New(db)
 
-	cfg := apiConfig{db: dbQueries, platform: platform, jwtSecret: jwtSecret}
+	cfg := apiConfig{db: dbQueries, platform: platform, jwtSecret: jwtSecret, polkaKey: polkaKey}
 	multiPlexer := http.NewServeMux()
 	const rootDir = http.Dir(".")
 	//initialize fileserver with hits counter
@@ -56,6 +59,10 @@ func main() {
 	multiPlexer.HandleFunc("POST /api/refresh", cfg.handlerRefresh)
 	multiPlexer.HandleFunc("POST /api/revoke", cfg.handlerRevoke)
 	multiPlexer.HandleFunc("PUT /api/users", cfg.handlerChangeUserInfo)
+	multiPlexer.HandleFunc("DELETE /api/chirps/{chirpID}", cfg.handlerDeleteChirpByID)
+	multiPlexer.HandleFunc("POST /api/polka/webhooks", cfg.handlerUpgradeUserToChirpyRed)
+	
+
 	//initialize and start server
 	server := http.Server{
 		Addr:    ":8080",
